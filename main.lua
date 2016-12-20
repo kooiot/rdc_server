@@ -12,7 +12,17 @@ skynet.start(function()
 	end
 	skynet.newservice("debug_console",8000)
 	skynet.newservice("cfg")
-	local starter = snax.uniqueservice("stream", {})
+--	local starter = snax.uniqueservice("starter")
+
+	local loginserver = skynet.newservice("logind")
+	local gate = skynet.newservice("gated", loginserver)
+
+	skynet.call(gate, "lua", "open" , {
+		port = 8888,
+		maxclient = 64,
+		servername = "sample",
+	})
+
 	skynet.newservice("adminweb", "0.0.0.0", 8181)
 	skynet.exit()
 end)
