@@ -1,5 +1,5 @@
 -- module proto as examples/proto.lua
-package.path = "./28181/?.lua;" .. package.path
+package.path = "./rdc/?.lua;" .. package.path
 
 local skynet = require "skynet"
 local sprotoparser = require "sprotoparser"
