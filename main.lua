@@ -23,6 +23,6 @@ skynet.start(function()
 		servername = "sample",
 	})
 
-	skynet.newservice("adminweb", "0.0.0.0", 8181)
+	skynet.newservice("adminweb", "0.0.0.0", 8090)
 	skynet.exit()
 end)
