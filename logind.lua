@@ -1,6 +1,8 @@
 local login = require "snax.loginserver"
 local crypt = require "crypt"
 local skynet = require "skynet"
+local coroutine = require "skynet.coroutine"
+
 
 local server = {
 	host = "127.0.0.1",
@@ -26,6 +28,7 @@ end
 function server.login_handler(server, uid, secret)
 	print(string.format("%s@%s is login, secret is %s", uid, server, crypt.hexencode(secret)))
 	local gameserver = assert(server_list[server], "Unknown server")
+
 	-- only one can login, because disallow multilogin
 	local last = user_online[uid]
 	if last then

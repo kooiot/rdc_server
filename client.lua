@@ -2,6 +2,7 @@ package.cpath = "luaclib/?.so"
 
 local socket = require "clientsocket"
 local crypt = require "crypt"
+local json = require 'json'
 
 if _VERSION ~= "Lua 5.3" then
 	error "Use lua 5.3"
@@ -165,6 +166,12 @@ print("===>",send_request("again",1))	-- request again (use new session)
 print("<===",recv_response(readpackage()))
 print("<===",recv_response(readpackage()))
 
+msg = {
+    cmd = "test",
+    data = 1212313
+}
+print("===>",send_request(json.encode(msg),2))	-- request again (use new session)
+print("<===",recv_response(readpackage()))
 
 print("disconnect")
 socket.close(fd)
