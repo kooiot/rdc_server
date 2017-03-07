@@ -46,9 +46,10 @@ skynet.start(function()
 	end)
 
 	skynet.dispatch("client", function(_,_, msg)
-        print(msg)
+        print('handling', msg)
 		-- the simple echo service
 		skynet.sleep(100)	-- sleep a while
+        print('handling finished', msg)
 		skynet.ret(msg)
 	end)
 end)

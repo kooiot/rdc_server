@@ -3,7 +3,6 @@ local crypt = require "crypt"
 local skynet = require "skynet"
 local coroutine = require "skynet.coroutine"
 
-
 local server = {
 	host = "127.0.0.1",
 	port = 8001,
@@ -11,6 +10,7 @@ local server = {
 	name = "login_master",
 }
 
+local rdc_db = nil
 local server_list = {}
 local user_online = {}
 local user_login = {}
@@ -46,6 +46,9 @@ end
 local CMD = {}
 
 function CMD.register_gate(server, address)
+    if not rdc_db then
+        rdc_db = require 'rdc_db'
+    end
 	server_list[server] = address
 end
 

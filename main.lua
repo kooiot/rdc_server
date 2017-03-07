@@ -10,7 +10,7 @@ skynet.start(function()
 	if not is_windows and not skynet.getenv "daemon" then
 		local console = skynet.newservice("console")
 	end
-	skynet.newservice("debug_console",8000)
+	skynet.newservice("debug_console",7000)
 	skynet.newservice("cfg")
 --	local starter = snax.uniqueservice("starter")
 
