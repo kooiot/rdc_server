@@ -10,9 +10,9 @@ httpc.timeout = 100
 local conf = {
     host = "127.0.0.1",
     port = "8000",
-    base_url = "/api/method/",
+    base_url = "/api/method/iot.hdb_api.",
     header = {
-        HDB_AutherizationCode = "AAAAAAAAAA"
+        HDB_AuthorizationCode = "12312313aaa"
     }
 }
 
@@ -22,9 +22,20 @@ local function escape(s)
 	end))
 end
 
+local function make_header(header)
+    local header = header or {}
+    for k,v in pairs(conf.header) do
+        if not header[k] then
+            header[k] = v
+        end
+    end
+    return header
+end
+
 function _M.get(api, recvheader, header, query, content)
     local query = query or {}
-    local header = setmetatable(header or {}, { __index = conf.header })
+    local header = make_header(header)
+    print(header.HDB_AuthorizationCode)
     local host = conf.host..":"..conf.port
     local url = conf.base_url..api
     local q = {}
@@ -39,9 +50,9 @@ function _M.get(api, recvheader, header, query, content)
 end
 
 function _M.post(api, form, recvheader)
-    local header = setmetatable({
+    local header = make_header({
 		["content-type"] = "application/x-www-form-urlencoded"
-	}, { __index=conf.header })
+	})
 	local body = {}
 	for k,v in pairs(form) do
 		table.insert(body, string.format("%s=%s",escape(k),escape(v)))
@@ -54,9 +65,9 @@ function _M.post(api, form, recvheader)
 end
 
 function _M.post_json(api, data, recvheader)
-    local header = setmetatable({
+    local header = make_header({
 		["content-type"] = "application/json"
-	}, { __index=conf.header })
+	})
 	local body = json.encode(data)
     local host = conf.host..":"..conf.port
     local url = conf.base_url..api
@@ -67,6 +78,7 @@ end
 function _M.login(user, passwd)
     local respheader = {}
     local status, body = _M.get("login", respheader, nil, {user=user, passwd=passwd})
+    print(status)
 
     if status == 200 then
         return body
