@@ -35,7 +35,6 @@ end
 function _M.get(api, recvheader, header, query, content)
     local query = query or {}
     local header = make_header(header)
-    print(header.HDB_AuthorizationCode)
     local host = conf.host..":"..conf.port
     local url = conf.base_url..api
     local q = {}
@@ -78,7 +77,6 @@ end
 function _M.login(user, passwd)
     local respheader = {}
     local status, body = _M.get("login", respheader, nil, {user=user, passwd=passwd})
-    print(status)
 
     if status == 200 then
         return body
@@ -103,14 +101,12 @@ end
 function _M.add_device(device)
     local respheader = {}
     local status, body = _M.post_json('add_device', device, respheader)
-    print(status, body)
     return true
 end
 
 function _M.update_device_status(sn, status)
     local respheader = {}
     local status, body = _M.post_json('update_device_status', {sn=sn, status=status}, respheader)
-    print(status, body)
     return true
 end
 

@@ -2,7 +2,7 @@ package.cpath = "luaclib/?.so"
 
 local socket = require "clientsocket"
 local crypt = require "crypt"
-local json = require 'json'
+local cjson = require 'cjson'
 
 if _VERSION ~= "Lua 5.3" then
 	error "Use lua 5.3"
@@ -98,6 +98,7 @@ print("login ok, subid=", subid)
 ----- connect to game server
 
 local function send_request(v, session)
+    local v = cjson.encode({cmd=v, user = token.user})
 	local size = #v + 4
 	local package = string.pack(">I2", size)..v..string.pack(">I4", session)
 	socket.send(fd, package)
@@ -166,13 +167,6 @@ print(readpackage())
 print("===>",send_request("fake",0))	-- request again (use last session 0, so the request message is fake)
 print("===>",send_request("again",1))	-- request again (use new session)
 print("<===",recv_response(readpackage()))
-print("<===",recv_response(readpackage()))
-
-msg = {
-    cmd = "test",
-    data = 1212313
-}
-print("===>",send_request(json.encode(msg),2))	-- request again (use new session)
 print("<===",recv_response(readpackage()))
 
 print("disconnect")

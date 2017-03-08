@@ -1,4 +1,5 @@
 local skynet = require "skynet"
+local cjson = require 'cjson'
 
 skynet.register_protocol {
 	name = "client",
@@ -38,6 +39,11 @@ function CMD.afk(source)
 	skynet.error(string.format("AFK"))
 end
 
+local MSG = {}
+
+function MSG.list_devices()
+end
+
 skynet.start(function()
 	-- If you want to fork a work thread , you MUST do it in CMD.login
 	skynet.dispatch("lua", function(session, source, command, ...)
@@ -46,10 +52,17 @@ skynet.start(function()
 	end)
 
 	skynet.dispatch("client", function(_,_, msg)
-        print('handling', msg)
 		-- the simple echo service
-		skynet.sleep(100)	-- sleep a while
-        print('handling finished', msg)
-		skynet.ret(msg)
+		--skynet.sleep(100)	-- sleep a while
+		--skynet.ret(msg)
+        local msg = cjson.decode(msg)
+        if msg then
+            assert(msg.user == userid)
+            if MSG[msg.cmd] then
+                skynet.ret(MSG[msg.cmd](msg.data))
+            else
+                skynet.ret("There is no command "..msg.cmd)
+            end
+        end
 	end)
 end)

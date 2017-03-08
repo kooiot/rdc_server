@@ -28,7 +28,7 @@ function server.auth_handler(token)
 end
 
 function server.login_handler(server, uid, secret)
-	print(string.format("%s@%s is login, secret is %s", uid, server, crypt.hexencode(secret)))
+	skynet.error(string.format("%s@%s is login, secret is %s", uid, server, crypt.hexencode(secret)))
 	local gameserver = assert(server_list[server], "Unknown server")
 
 	-- only one can login, because disallow multilogin
