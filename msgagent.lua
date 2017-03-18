@@ -1,5 +1,7 @@
 local skynet = require "skynet"
 local cjson = require 'cjson'
+local rdc_db = require "rdc_db"
+local event_queue = require 'event_queue'
 
 skynet.register_protocol {
 	name = "client",
@@ -9,6 +11,7 @@ skynet.register_protocol {
 
 local gate
 local userid, subid
+local queue = event_queue()
 
 local CMD = {}
 
@@ -31,6 +34,7 @@ end
 function CMD.logout(source)
 	-- NOTICE: The logout MAY be reentry
 	skynet.error(string.format("%s is logout", userid))
+    queue.abort()
 	logout()
 end
 
@@ -39,9 +43,19 @@ function CMD.afk(source)
 	skynet.error(string.format("AFK"))
 end
 
+function CMD.send_msg(msg)
+    return queue.push(msg, 100)
+end
+
 local MSG = {}
 
-function MSG.list_devices()
+function MSG.list_devices(user, data)
+    return rdc_db.list_devices(user)
+end
+
+-- TImeout in second
+function MSG.poll_msg(user, timeout)
+    return queue.pop(timeout, 500)
 end
 
 skynet.start(function()
@@ -59,7 +73,7 @@ skynet.start(function()
         if msg then
             assert(msg.user == userid)
             if MSG[msg.cmd] then
-                skynet.ret(MSG[msg.cmd](msg.data))
+                skynet.ret(MSG[msg.cmd](msg.user, msg.data))
             else
                 skynet.ret("There is no command "..msg.cmd)
             end

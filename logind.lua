@@ -5,7 +5,7 @@ local coroutine = require "skynet.coroutine"
 local rdc_db = require "rdc_db"
 
 local server = {
-	host = "127.0.0.1",
+	host = "0.0.0.0",
 	port = 8001,
 	multilogin = false,	-- disallow multilogin
 	name = "login_master",
