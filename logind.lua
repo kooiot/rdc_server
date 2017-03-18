@@ -2,7 +2,6 @@ local login = require "snax.loginserver"
 local crypt = require "crypt"
 local skynet = require "skynet"
 local coroutine = require "skynet.coroutine"
-local rdc_db = require "rdc_db"
 
 local server = {
 	host = "0.0.0.0",
@@ -11,6 +10,7 @@ local server = {
 	name = "login_master",
 }
 
+local auth_list = {}
 local server_list = {}
 local user_online = {}
 local user_login = {}
@@ -21,8 +21,9 @@ function server.auth_handler(token)
 	user = crypt.base64decode(user)
 	server = crypt.base64decode(server)
 	password = crypt.base64decode(password)
-    assert(rdc_db, "Invalid db api")
-    assert(rdc_db.login(user, password), "Invalid password")
+
+	local authserver = assert(auth_list[server], "Unknown auth server")
+    assert(skynet.call(authserver, "lua", "auth", user, password))
 	--assert(password == "password", "Invalid password")
 	return server, user
 end
@@ -49,6 +50,9 @@ local CMD = {}
 
 function CMD.register_gate(server, address)
 	server_list[server] = address
+    if not auth_list[server] then
+        auth_list[server] = skynet.newservice("auth", server)
+    end
 end
 
 function CMD.logout(uid, subid)
