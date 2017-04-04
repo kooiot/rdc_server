@@ -1,22 +1,18 @@
 local skynet = require "skynet"
 require "skynet.manager"	-- import skynet.register
-local db = {}
-local server_name
+local rdc_db = require "rdc_db"
+
+local arg = table.pack(...)
+assert(arg.n == 1)
+local server_name = arg[1]
 
 local command = {}
 
-function command.AUTH(key)
-	return db[key]
+function command.AUTH(user, passwd)
+    assert(rdc_db.login(user, passwd))
 end
 
-function command.SET(key, value)
-	local last = db[key]
-	db[key] = value
-	return last
-end
-
-skynet.start(function(server)
-    server_name = server
+skynet.start(function()
     -- Connect to DB?
 	skynet.dispatch("lua", function(session, address, cmd, ...)
 		local f = command[string.upper(cmd)]
