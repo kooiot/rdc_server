@@ -13,6 +13,7 @@ skynet.start(function()
 --	local starter = snax.uniqueservice("starter")
 
 	local loginserver = skynet.newservice("logind")
+    local auth = skynet.newservice("auth", loginserver, "sample")
 	local gate = skynet.newservice("gated", loginserver)
 
 	skynet.call(gate, "lua", "open" , {

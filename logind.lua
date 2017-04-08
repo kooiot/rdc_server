@@ -22,15 +22,13 @@ function server.auth_handler(token)
 	server = crypt.base64decode(server)
 	password = crypt.base64decode(password)
 
-	local authserver = assert(auth_list[server], "Unknown auth server")
-    assert(skynet.call(authserver, "lua", "auth", user, password))
-	--assert(password == "password", "Invalid password")
+    assert(skynet.call("AUTH", "lua", "auth", server, user, password))
 	return server, user
 end
 
 function server.login_handler(server, uid, secret)
 	skynet.error(string.format("%s@%s is login, secret is %s", uid, server, crypt.hexencode(secret)))
-	local gameserver = assert(server_list[server], "Unknown server")
+	local gameserver = assert(server_list[server], "Unknown gate server: "..server)
 
 	-- only one can login, because disallow multilogin
 	local last = user_online[uid]
@@ -50,9 +48,6 @@ local CMD = {}
 
 function CMD.register_gate(server, address)
 	server_list[server] = address
-    if not auth_list[server] then
-        auth_list[server] = skynet.newservice("auth", server)
-    end
 end
 
 function CMD.logout(uid, subid)

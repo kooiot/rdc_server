@@ -68,8 +68,6 @@ writeline(fd, crypt.base64encode(hmac))
 
 local token = {
 	server = "sample",
-	--user = "hello",
-	--pass = "password",
     user = 'changch84@163.com',
     pass = 'pa88word',
 }
