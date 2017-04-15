@@ -1,96 +1,21 @@
+if _VERSION ~= "Lua 5.3" then
+	error "Use lua 5.3"
+end
+
 package.cpath = "luaclib/?.so"
 package.path = "lualib/?.lua;rdc/lualib/?.lua"
 
 local socket = require "clientsocket"
 local crypt = require "crypt"
-local cjson = require 'cjson'
-
-if _VERSION ~= "Lua 5.3" then
-	error "Use lua 5.3"
-end
-
-local fd = assert(socket.connect("127.0.0.1", 8001))
-
-local function writeline(fd, text)
-	socket.send(fd, text .. "\n")
-end
-
-local function unpack_line(text)
-	local from = text:find("\n", 1, true)
-	if from then
-		return text:sub(1, from-1), text:sub(from+1)
-	end
-	return nil, text
-end
-
-local last = ""
-
-local function unpack_f(f)
-	local function try_recv(fd, last)
-		local result
-		result, last = f(last)
-		if result then
-			return result, last
-		end
-		local r = socket.recv(fd)
-		if not r then
-			return nil, last
-		end
-		if r == "" then
-			error "Server closed"
-		end
-		return f(last .. r)
-	end
-
-	return function()
-		while true do
-			local result
-			result, last = try_recv(fd, last)
-			if result then
-				return result
-			end
-			socket.usleep(100)
-		end
-	end
-end
-
-local readline = unpack_f(unpack_line)
-
-local challenge = crypt.base64decode(readline())
-
-local clientkey = crypt.randomkey()
-writeline(fd, crypt.base64encode(crypt.dhexchange(clientkey)))
-local secret = crypt.dhsecret(crypt.base64decode(readline()), clientkey)
-
-print("sceret is ", crypt.hexencode(secret))
-
-local hmac = crypt.hmac64(challenge, secret)
-writeline(fd, crypt.base64encode(hmac))
+local login = require("client.login"):new("127.0.0.1", 8001)
 
 local token = {
-	server = "sample",
-    user = 'changch84@163.com',
-    pass = 'pa88word',
+	server = 'sample',
+	user = 'changch84@163.com',
+	passwd = 'pa88word'
 }
 
-local function encode_token(token)
-	return string.format("%s@%s:%s",
-		crypt.base64encode(token.user),
-		crypt.base64encode(token.server),
-		crypt.base64encode(token.pass))
-end
-
-local etoken = crypt.desencode(secret, encode_token(token))
-local b = crypt.base64encode(etoken)
-writeline(fd, crypt.base64encode(etoken))
-
-local result = readline()
-print(result)
-local code = tonumber(string.sub(result, 1, 3))
-assert(code == 200)
-socket.close(fd)
-
-local subid = crypt.base64decode(string.sub(result, 5))
+local r, subid, secret = assert(login:login(token.server, token.user, token.passwd))
 
 print("login ok, subid=", subid)
 
@@ -108,7 +33,6 @@ local function unpack_package(text)
 	return text:sub(3,2+s), text:sub(3+s)
 end
 
-local readpackage = unpack_f(unpack_package)
 
 local function send_package(fd, pack)
 	local package = string.pack(">s2", pack)
@@ -119,8 +43,8 @@ local text = "echo"
 local index = 1
 
 print("connect")
-fd = assert(socket.connect("127.0.0.1", 8888))
-last = ""
+local fd = assert(socket.connect("127.0.0.1", 8888))
+local readpackage = login.unpacker(fd, unpack_package)
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)
 local hmac = crypt.hmac64(crypt.hashkey(handshake), secret)
@@ -136,9 +60,9 @@ index = index + 1
 
 print("connect again")
 fd = assert(socket.connect("127.0.0.1", 8888))
-last = ""
+readpackage = login.unpacker(fd, unpack_package)
 
-local spclient = require 'spclient':new(fd)
+local gate_client = require 'client.gate':new(fd)
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)
 local hmac = crypt.hmac64(crypt.hashkey(handshake), secret)
@@ -147,9 +71,9 @@ send_package(fd, handshake .. ":" .. crypt.base64encode(hmac))
 
 print(readpackage())
 
-spclient:send_request("handshake")
+gate_client:send_request("handshake")
 while true do
-	spclient:dispatch_package()
+	gate_client:dispatch_package()
 end
 
 print("disconnect")
