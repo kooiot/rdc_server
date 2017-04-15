@@ -53,7 +53,6 @@ end
 function CMD.logout(uid, subid)
 	local u = user_online[uid]
 	if u then
-		print(string.format("%s@%s is logout", uid, u.server))
 		user_online[uid] = nil
 	end
 end

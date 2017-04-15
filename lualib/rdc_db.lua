@@ -5,7 +5,7 @@ local _M = {}
 local httpc = require 'http.httpc'
 
 httpc.dns()
-httpc.timeout = 100
+httpc.timeout = 10
 
 local conf = {
     host = "127.0.0.1",

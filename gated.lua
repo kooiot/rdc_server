@@ -1,4 +1,4 @@
-local msgserver = require "snax.msgserver"
+local msgserver = require "msgserver"
 local crypt = require "crypt"
 local skynet = require "skynet"
 
