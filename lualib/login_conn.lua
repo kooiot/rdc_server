@@ -1,5 +1,3 @@
-package.cpath = "luaclib/?.so"
-package.path = "lualib/?.lua;rdc/lualib/?.lua"
 
 local socket = require "clientsocket"
 local crypt = require "crypt"
@@ -95,6 +93,7 @@ local subid = crypt.base64decode(string.sub(result, 5))
 print("login ok, subid=", subid)
 
 ----- connect to game server
+
 local function unpack_package(text)
 	local size = #text
 	if size < 2 then

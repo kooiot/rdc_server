@@ -1,4 +1,4 @@
-local msgserver = require "msgserver"
+local msgserver = require "msg_server"
 local crypt = require "crypt"
 local skynet = require "skynet"
 
@@ -73,10 +73,19 @@ function server.disconnect_handler(username)
 	end
 end
 
--- call by self (when recv a request from client)
-function server.request_handler(username, msg)
+-- call by self (when socket connect)
+function server.connect_handler(username, fd)
 	local u = username_map[username]
-	return skynet.tostring(skynet.rawcall(u.agent, "client", msg))
+	if u then
+		skynet.call(u.agent, "lua", "connect", fd)
+	end
+end
+
+-- call by self (when recv a request from client)
+function server.request_handler(username, msg, sz)
+	local u = username_map[username]
+	agent = assert(u.agent, "There is no agent for "..username)
+	skynet.redirect(u.agent, u.subid, "client", 1, msg, sz)
 end
 
 -- call by self (when gate open)
