@@ -106,7 +106,6 @@ skynet.start(function()
 	skynet.fork(function()
 		while true do
 			if client_fd then
-				print('sending hearbeat', client_fd)
 				send_package(send_request("heartbeat"))
 			end
 			skynet.sleep(500)
