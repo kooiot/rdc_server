@@ -1,4 +1,3 @@
-local socket = require "clientsocket"
 local proto = require "proto"
 local sproto = require "sproto"
 local class = require 'middleclass'
@@ -8,9 +7,9 @@ local request = host:attach(sproto.new(proto.c2s))
 
 local spclass = class("SprotoClient")
 
-local function send_package(fd, pack)
+local function send_package(sock, pack)
 	local package = string.pack(">s2", pack)
-	socket.send(fd, package)
+	sock:send(package)
 end
 
 local function unpack_package(text)
@@ -26,13 +25,13 @@ local function unpack_package(text)
 	return text:sub(3,2+s), text:sub(3+s)
 end
 
-local function recv_package(fd, last)
+local function recv_package(sock, last)
 	local result
 	result, last = unpack_package(last)
 	if result then
 		return result, last
 	end
-	local r = socket.recv(fd)
+	local r = sock:recv()
 	if not r then
 		return nil, last
 	end
@@ -42,8 +41,8 @@ local function recv_package(fd, last)
 	return unpack_package(last .. r)
 end
 
-function spclass:initialize(fd)
-	self._fd = fd
+function spclass:initialize(sock)
+	self._sock = sock
 	self._session = 0
 	self._last = ""
 end
@@ -51,7 +50,7 @@ end
 function spclass:send_request(name, args)
 	self._session = self._session + 1
 	local str = request(name, args, self._session)
-	send_package(self._fd, str)
+	send_package(self._sock, str)
 	print("Request:", self._session)
 end
 
@@ -85,7 +84,7 @@ end
 function spclass:dispatch_package()
 	while true do
 		local v
-		v, self._last = recv_package(self._fd, self._last)
+		v, self._last = recv_package(self._sock, self._last)
 		if not v then
 			break
 		end

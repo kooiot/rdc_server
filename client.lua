@@ -7,7 +7,6 @@ package.path = "lualib/?.lua;rdc/lualib/?.lua"
 
 local socket = require "clientsocket"
 local crypt = require "crypt"
-local login = require("client.login"):new("127.0.0.1", 8001)
 
 local token = {
 	server = 'sample',
@@ -15,7 +14,28 @@ local token = {
 	passwd = 'pa88word'
 }
 
+local fd = socket.connect("127.0.0.1", 8001)
+
+local function make_sock(fd)
+	local fd = fd
+	return {
+		send = function(self, data)
+			return socket.send(fd, data)
+		end,
+		recv = function(self)
+			local r = socket.recv(fd)
+			if not r then
+				socket.usleep(100)
+			end
+			return r
+		end,
+	}
+end
+
+local login = require("client.login"):new(make_sock(fd))
+
 local r, subid, secret = assert(login:login(token.server, token.user, token.passwd))
+socket.close(fd)
 
 print("login ok, subid=", subid)
 
@@ -44,7 +64,7 @@ local index = 1
 
 print("connect")
 local fd = assert(socket.connect("127.0.0.1", 8888))
-local readpackage = login.unpacker(fd, unpack_package)
+local readpackage = login.unpacker(make_sock(fd), unpack_package)
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)
 local hmac = crypt.hmac64(crypt.hashkey(handshake), secret)
@@ -60,9 +80,9 @@ index = index + 1
 
 print("connect again")
 fd = assert(socket.connect("127.0.0.1", 8888))
-readpackage = login.unpacker(fd, unpack_package)
+readpackage = login.unpacker(make_sock(fd), unpack_package)
 
-local gate_client = require 'client.gate':new(fd)
+local gate_client = require 'client.gate':new(make_sock(fd))
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)
 local hmac = crypt.hmac64(crypt.hashkey(handshake), secret)

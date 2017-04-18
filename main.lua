@@ -25,5 +25,6 @@ skynet.start(function()
 	})
 
 	skynet.newservice("adminweb", "0.0.0.0", 8090)
+	skynet.newservice("rdc_client", "0.0.0.0", 8090)
 	skynet.exit()
 end)

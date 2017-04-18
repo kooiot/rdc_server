@@ -1,11 +1,10 @@
-local socket = require "clientsocket"
 local crypt = require "crypt"
 local class = require "middleclass"
 
 local loginclass = class("LoginClass")
 
-local function writeline(fd, text)
-	socket.send(fd, text .. "\n")
+local function writeline(sock, text)
+	sock:send(text .. "\n")
 end
 
 local function unpack_line(text)
@@ -18,23 +17,23 @@ end
 
 local function encode_token(token)
 	return string.format("%s@%s:%s",
-	crypt.base64encode(token.user),
-	crypt.base64encode(token.server),
-	crypt.base64encode(token.passwd))
+						crypt.base64encode(token.user),
+						crypt.base64encode(token.server),
+						crypt.base64encode(token.passwd))
 end
 
-local function unpacker(fd, f)
+local function unpacker(sock, f)
 	local last = ""
 
-	local function unpack_f(fd, f)
-		local fd = fd
-		local function try_recv(fd, last)
+	local function unpack_f(sock, f)
+
+		local function try_recv(sock, last)
 			local result
 			result, last = f(last)
 			if result then
 				return result, last
 			end
-			local r = socket.recv(fd)
+			local r = sock:recv()
 			if not r then
 				return nil, last
 			end
@@ -44,38 +43,38 @@ local function unpacker(fd, f)
 			return f(last .. r)
 		end
 
+		local sock = sock
 		return function()
 			while true do
 				local result
-				result, last = try_recv(fd, last)
+				result, last = try_recv(sock, last)
 				if result then
 					return result
 				end
-				socket.usleep(100)
 			end
 		end
 	end
 
-	return unpack_f(fd, f)
+	return unpack_f(sock, f)
 end
 
 
 
-local function do_login(ip, port, server, user, passwd)
-	local fd = assert(socket.connect(ip, port))
+local function do_login(sock, server, user, passwd)
+	--local fd = assert(socket.connect(ip, port))
 
-	local readline = unpacker(fd, unpack_line)
+	local readline = unpacker(sock, unpack_line)
 
 	local challenge = crypt.base64decode(readline())
 
 	local clientkey = crypt.randomkey()
-	writeline(fd, crypt.base64encode(crypt.dhexchange(clientkey)))
+	writeline(sock, crypt.base64encode(crypt.dhexchange(clientkey)))
 	local secret = crypt.dhsecret(crypt.base64decode(readline()), clientkey)
 
 	print("sceret is ", crypt.hexencode(secret))
 
 	local hmac = crypt.hmac64(challenge, secret)
-	writeline(fd, crypt.base64encode(hmac))
+	writeline(sock, crypt.base64encode(hmac))
 
 	local token = {
 		server = server,
@@ -85,12 +84,11 @@ local function do_login(ip, port, server, user, passwd)
 
 	local etoken = crypt.desencode(secret, encode_token(token))
 	local b = crypt.base64encode(etoken)
-	writeline(fd, crypt.base64encode(etoken))
+	writeline(sock, crypt.base64encode(etoken))
 
 	local result = readline()
 	local code = tonumber(string.sub(result, 1, 3))
 	assert(code == 200, result)
-	socket.close(fd)
 
 	local subid = crypt.base64decode(string.sub(result, 5))
 
@@ -100,14 +98,13 @@ local function do_login(ip, port, server, user, passwd)
 end
 
 
-function loginclass:initialize(ip, port)
-	self._ip = ip
-	self._port = port
+function loginclass:initialize(sock)
+	self._sock = sock
 	self.unpacker = unpacker
 end
 
 function loginclass:login(server, user, passwd)
-	return pcall(do_login, self._ip, self._port, server, user, passwd)
+	return pcall(do_login, self._sock, server, user, passwd)
 end
 
 return loginclass
