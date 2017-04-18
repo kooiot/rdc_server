@@ -2,15 +2,26 @@ local skynet = require 'skynet'
 local socket = require 'socket'
 local crypt = require 'crypt'
 
-local token = {
-	server = 'sample',
-	user = 'changch84@163.com',
-	passwd = 'pa88word'
-}
 
+local function load_token()
+	return skynet.call("CFG", "lua", "get", "RDC.Cient.token") or {
+		server = 'sample',
+		user = 'changch84@163.com',
+		passwd = 'pa88word'
+	}
+end
+
+local function load_server()
+	return skynet.call("CFG", "lua", "get", "RDC.Client.server") or {
+		ip = '127.0.0.1',
+		port = 8001
+	}
+end
 
 local function test()
-	local fd = socket.open("127.0.0.1", 8001)
+	local token = load_token()
+	local server = load_server()
+	local fd = socket.open(server.ip, server.port)
 
 	local function make_sock(fd)
 		local fd = fd
