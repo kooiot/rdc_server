@@ -10,12 +10,12 @@ local mode = ...
 
 if mode == "agent" then
 
-package.path = SERVICE_PATH.."/lwf/?.lua;"..SERVICE_PATH.."/lwf/?/init.lua;"..package.path
+package.path = SERVICE_PATH.."/../lwf/?.lua;"..SERVICE_PATH.."/../lwf/?/init.lua;"..package.path
 
 if not skynet.getenv("LWF_HOME") then
-	skynet.setenv("LWF_HOME", SERVICE_PATH.."/lwf")
+	skynet.setenv("LWF_HOME", SERVICE_PATH.."/../lwf")
 	skynet.setenv("LWF_APP_NAME", "skynet")
-	skynet.setenv("LWF_APP_PATH", SERVICE_PATH.."/www")
+	skynet.setenv("LWF_APP_PATH", SERVICE_PATH.."/../www")
 end
 
 local app = require "skynet_app"
