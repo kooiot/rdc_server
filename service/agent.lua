@@ -1,13 +1,16 @@
 local skynet = require "skynet"
 local cjson = require 'cjson'
-local socket = require "socket"
+local socket = require "skynet.socket"
 local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
 local rdc_db = require "rdc_db"
 
 local gate
 local userid, subid
+local client_username
 local client_fd
+local session_id = 1
+local session_source_map = {}
 local REQUEST = {}
 
 local host = sprotoloader.load(1):host "package"
@@ -15,10 +18,6 @@ local send_request = host:attach(sprotoloader.load(2))
 
 function REQUEST.list_devices(user, data)
     return rdc_db.list_devices(user)
-end
-
--- TImeout in second
-function REQUEST.poll_msg(user, timeout)
 end
 
 function REQUEST.handshake()
@@ -36,6 +35,21 @@ end
 local function send_package(pack)
 	local package = string.pack(">s2", pack)
 	socket.write(client_fd, package)
+end
+
+local function handle_response(session, args)
+	print(session, args)
+	local source = session_source_map[session]
+	if not source then
+		skynet.error("Session has no source for", session)
+	else
+		session_source_map[session] = nil
+		if session ~= skynet.self() then
+			skynet.call(source, "lua", "on_resp", client_username, args)
+		else
+			print('xxxxxxxxxxxxxx')
+		end
+	end
 end
 
 skynet.register_protocol {
@@ -56,7 +70,8 @@ skynet.register_protocol {
 			end
 		else
 			assert(type == "RESPONSE")
-			error "This example doesn't support request client"
+			-- error "This example doesn't support request client"
+			handle_response(...)
 		end
 	end
 }
@@ -91,9 +106,20 @@ function CMD.afk(source)
 	skynet.error(string.format("AFK"))
 end
 
-function CMD.connect(source, fd)
+function CMD.connect(source, username, fd)
 	-- slot 1,2 set at main.lua
+	client_username = username
 	client_fd = fd
+end
+
+function CMD.create_channel(source, ctype, param)
+	data = {
+		['type'] = ctype,
+		data = cjson.encode(param)
+	}
+	send_package(send_request("create", data, session_id))
+	session_source_map[session_id] = source
+	session_id = session_id + 1
 end
 
 
@@ -109,6 +135,9 @@ skynet.start(function()
 				send_package(send_request("heartbeat"))
 			end
 			skynet.sleep(500)
+			if client_fd then
+				CMD.create_channel(skynet.self(), 'serial', {baudrate=9600})
+			end
 		end
 	end)
 end)

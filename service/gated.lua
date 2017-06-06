@@ -1,6 +1,6 @@
 local msgserver = require "msg_server"
-local crypt = require "crypt"
 local skynet = require "skynet"
+local crypt = require "skynet.crypt"
 
 local loginservice = tonumber(...)
 
@@ -77,7 +77,7 @@ end
 function server.connect_handler(username, fd)
 	local u = username_map[username]
 	if u then
-		skynet.call(u.agent, "lua", "connect", fd)
+		skynet.call(u.agent, "lua", "connect", username, fd)
 	end
 end
 
