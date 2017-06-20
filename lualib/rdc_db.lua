@@ -45,7 +45,12 @@ function _M.get(api, recvheader, header, query, content)
         url = url..'?'..table.concat(q, '&')
     end
 
-    return httpc.request('GET', host, url, recvheader, header, content)
+    local r, status, body = pcall(httpc.request, 'GET', host, url, recvheader, header, content)
+	if not r then
+		return nil, "failed call request"
+	else
+		return status, body
+	end
 end
 
 function _M.post(api, form, recvheader)
@@ -60,12 +65,18 @@ function _M.post(api, form, recvheader)
     local host = conf.host..":"..conf.port
     local url = conf.base_url..api
 
-	return httpc.request("POST", host, url, recvheader, header, table.concat(body , "&"))
+	local r, status, body = httpc.request("POST", host, url, recvheader, header, table.concat(body , "&"))
+	if not r then
+		return nil, "failed call request"
+	else
+		return status, body
+	end
 end
 
 function _M.post_json(api, data, recvheader)
     local header = make_header({
-		["content-type"] = "application/json"
+		["content-type"] = "application/json",
+		["accept"] = "application/json",
 	})
 	local body = json.encode(data)
     local host = conf.host..":"..conf.port
