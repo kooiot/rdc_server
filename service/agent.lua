@@ -10,18 +10,19 @@ local userid, subid
 local client_username
 local client_fd
 local session_id = 1
-local session_source_map = {}
+local response_callback_map = {}
 local REQUEST = {}
 
 local host = sprotoloader.load(1):host "package"
-local send_request = host:attach(sprotoloader.load(2))
+local create_request = host:attach(sprotoloader.load(2))
 
 function REQUEST.list_devices(user, data)
     return rdc_db.list_devices(user)
 end
 
 function REQUEST.handshake()
-	return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
+	--return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
+	return { msg = "Welcome to Remtoe Device Connector Cloud." }
 end
 
 local function request(name, args, response)
@@ -37,19 +38,21 @@ local function send_package(pack)
 	socket.write(client_fd, package)
 end
 
+local function send_request(name, args, response_callback)
+	send_package(create_request(name, args, session_id))
+	response_callback_map[session_id] = response_callback
+	session_id = session_id + 1
+end
+
 local function handle_response(session, args)
 	print(session, args)
-	local source = session_source_map[session]
-	if not source then
-		skynet.error("Session has no source for", session)
+	local callback = response_callback_map[session]
+	if not callback then
+		skynet.error("Callback function missing for session: ", session)
 	else
-		session_source_map[session] = nil
-		if session ~= skynet.self() then
-			skynet.call(source, "lua", "on_resp", client_username, args)
-		else
-			print('xxxxxxxxxxxxxx')
-		end
+		callback(args)
 	end
+	response_callback_map[session] = nil
 end
 
 skynet.register_protocol {
@@ -117,9 +120,9 @@ function CMD.create_channel(source, ctype, param)
 		['type'] = ctype,
 		data = cjson.encode(param)
 	}
-	send_package(send_request("create", data, session_id))
-	session_source_map[session_id] = source
-	session_id = session_id + 1
+	send_request("create", data, function(args)
+		print("create response", args.result, args.channel)
+	end)
 end
 
 
@@ -132,7 +135,7 @@ skynet.start(function()
 	skynet.fork(function()
 		while true do
 			if client_fd then
-				send_package(send_request("heartbeat"))
+				send_request("heartbeat")
 			end
 			skynet.sleep(500)
 			if client_fd then
