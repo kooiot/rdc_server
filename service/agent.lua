@@ -45,7 +45,7 @@ local function send_request(name, args, response_callback)
 end
 
 local function handle_response(session, args)
-	print(session, args)
+	--print(session, args)
 	local callback = response_callback_map[session]
 	if not callback then
 		skynet.error("Callback function missing for session: ", session)
@@ -121,10 +121,13 @@ function CMD.create_channel(source, ctype, param)
 		data = cjson.encode(param)
 	}
 	send_request("create", data, function(args)
-		print("create response", args.result, args.channel)
+		skynet.call(source, "lua", "on_create_channel", args.result, args.channel)
 	end)
 end
 
+function CMD.on_create_channel(source, result, channel)
+	print("Channel create", result, channel)
+end
 
 skynet.start(function()
 	-- If you want to fork a work thread , you MUST do it in CMD.login

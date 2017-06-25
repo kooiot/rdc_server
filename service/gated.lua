@@ -1,6 +1,6 @@
 local msgserver = require "msg_server"
-local skynet = require "skynet"
 local crypt = require "skynet.crypt"
+local skynet = require "skynet"
 
 local loginservice = tonumber(...)
 
