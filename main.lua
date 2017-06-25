@@ -15,7 +15,10 @@ skynet.start(function()
 --	local starter = snax.uniqueservice("starter")
 
 	local loginserver = skynet.newservice("logind")
-    local auth = skynet.newservice("auth", true)
+
+    local apimgr = skynet.newservice("apimgr")
+	skynet.call(apimgr, "lua", "add_api", "sample", "frappe_api")
+
 	local gate = skynet.newservice("gated", loginserver)
 
 	skynet.call(gate, "lua", "open" , {

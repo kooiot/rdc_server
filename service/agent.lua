@@ -3,7 +3,6 @@ local cjson = require 'cjson'
 local socket = require "skynet.socket"
 local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
-local rdc_db = require "rdc_db"
 
 local gate
 local userid, subid
@@ -17,7 +16,7 @@ local host = sprotoloader.load(1):host "package"
 local create_request = host:attach(sprotoloader.load(2))
 
 function REQUEST.list_devices(user, data)
-    return rdc_db.list_devices(user)
+	return skynet.call("APIMGR", "lua", "list_device", user, data)
 end
 
 function REQUEST.handshake()

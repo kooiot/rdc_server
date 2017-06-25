@@ -28,7 +28,7 @@ local function escape(s)
 	end))
 end
 
-local function make_header(header)
+function _M:_make_header(header)
     local header = header or {}
     for k,v in pairs(self.conf.header) do
         if not header[k] then
@@ -40,7 +40,7 @@ end
 
 function _M:get(api, recvheader, header, query, content)
     local query = query or {}
-    local header = make_header(header)
+    local header = self:_make_header(header)
     local host = self.conf.host..":"..self.conf.port
     local url = self.conf.base_url..api
     local q = {}
@@ -61,7 +61,7 @@ function _M:get(api, recvheader, header, query, content)
 end
 
 function _M:post(api, form, recvheader)
-    local header = make_header({
+    local header = self:_make_header({
 		["content-type"] = "application/x-www-form-urlencoded"
 	})
 	local body = {}
@@ -82,7 +82,7 @@ function _M:post(api, form, recvheader)
 end
 
 function _M:post_json(api, data, recvheader)
-    local header = make_header({
+    local header = self:_make_header({
 		["content-type"] = "application/json",
 		["accept"] = "application/json",
 	})
@@ -96,7 +96,7 @@ end
 
 function _M:login(user, passwd)
     local respheader = {}
-    local status, body = _M.get("login", respheader, nil, {user=user, passwd=passwd})
+    local status, body = self:get("login", respheader, nil, {user=user, passwd=passwd})
 
     if status == 200 then
         return body
@@ -110,7 +110,7 @@ end
 
 function _M:list_devices(user)
     local respheader = {}
-    local status, body = _M.get("list_devices", respheader, nil, {user=user})
+    local status, body = self:get("list_devices", respheader, nil, {user=user})
 
     if status == 200 then
         return body
@@ -120,13 +120,13 @@ end
 
 function _M:add_device(device)
     local respheader = {}
-    local status, body = _M.post_json('add_device', device, respheader)
+    local status, body = self:post_json('add_device', device, respheader)
     return true
 end
 
 function _M:update_device_status(sn, status)
     local respheader = {}
-    local status, body = _M.post_json('update_device_status', {sn=sn, status=status}, respheader)
+    local status, body = self:post_json('update_device_status', {sn=sn, status=status}, respheader)
     return true
 end
 

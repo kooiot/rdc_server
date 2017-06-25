@@ -22,7 +22,7 @@ function server.auth_handler(token)
 	server = crypt.base64decode(server)
 	password = crypt.base64decode(password)
 
-    assert(skynet.call("AUTH", "lua", "auth", server, user, password))
+    assert(skynet.call("APIMGR", "lua", "auth", server, user, password))
 	return server, user
 end
 
