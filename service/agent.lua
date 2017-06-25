@@ -10,18 +10,46 @@ local client_username
 local client_fd
 local session_id = 1
 local response_callback_map = {}
+local request_id = 1
+local request_co_map = {}
+local request_result = {}
 local REQUEST = {}
 
 local host = sprotoloader.load(1):host "package"
 local create_request = host:attach(sprotoloader.load(2))
 
-function REQUEST.list_devices(user, data)
-	return skynet.call("APIMGR", "lua", "list_device", user, data)
-end
-
 function REQUEST.handshake()
 	--return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
 	return { msg = "Welcome to Remtoe Device Connector Cloud." }
+end
+
+function REQUEST.list_devices(args)
+	return skynet.call("APIMGR", "lua", "list_devices", args.user)
+end
+
+function REQUEST.create_channel(args)
+	local device = args.device
+	local ctype = args.type
+	local param = args.param
+	local dev_agent = skynet.call(gate, "lua", "find_device", device)
+	if not dev_agent then
+		return {
+			result = false,
+			msg = "Device "..device.." is not online"
+		}
+	end
+	local id = request_id
+	request_id = request_id + 1
+	assert(request_co_map[id] == nil)
+
+	request_co_map[id] = coroutine.running()
+	skynet.call(dev_agent, "lua", "create_channel", id, ctype, param)
+	skynet.wait()
+
+	local r = request_result[id]
+	request_result[id] = nil
+	request_co_map[id] = nil
+	return table.unpack(r)
 end
 
 local function request(name, args, response)
@@ -114,18 +142,25 @@ function CMD.connect(source, username, fd)
 	client_fd = fd
 end
 
-function CMD.create_channel(source, ctype, param)
+function CMD.create_channel(source, rid, ctype, param)
 	data = {
 		['type'] = ctype,
 		data = cjson.encode(param)
 	}
 	send_request("create", data, function(args)
-		skynet.call(source, "lua", "on_create_channel", args.result, args.channel)
+		skynet.call(source, "lua", "on_create_channel", rid, args)
 	end)
 end
 
-function CMD.on_create_channel(source, result, channel)
-	print("Channel create", result, channel)
+function CMD.on_create_channel(source, rid, args)
+	print("Channel create", args.result, args.channel)
+	local co = request_co_map[rid]
+	if co then
+		request_result[rid] = args
+		skynet.wakeup(co)
+	else
+		print("No waiting coroutine for response")
+	end
 end
 
 skynet.start(function()
@@ -141,7 +176,7 @@ skynet.start(function()
 			end
 			skynet.sleep(500)
 			if client_fd then
-				CMD.create_channel(skynet.self(), 'serial', {baudrate=9600})
+				CMD.create_channel(skynet.self(), 0, 'serial', {baudrate=9600})
 			end
 		end
 	end)
