@@ -5,8 +5,8 @@ end
 package.cpath = "luaclib/?.so"
 package.path = "lualib/?.lua;rdc/lualib/?.lua"
 
-local socket = require "clientsocket"
-local crypt = require "crypt"
+local socket = require "client.socket"
+local crypt = require "client.crypt"
 
 local token = {
 	server = 'sample',
@@ -92,6 +92,7 @@ send_package(fd, handshake .. ":" .. crypt.base64encode(hmac))
 print(readpackage())
 
 gate_client:send_request("handshake")
+gate_client:send_request("create", {device="aaa", ["type"] = "serial", param={}})
 while true do
 	gate_client:dispatch_package()
 end

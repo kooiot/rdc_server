@@ -67,8 +67,13 @@ function server.start(conf)
 	}
 
 	function handler.command(cmd, source, ...)
-		local f = assert(CMD[cmd])
-		return f(...)
+		local f = CMD[cmd]
+		if f then
+			return f(...)
+		else
+			assert(conf.command_handler)
+			return conf.command_handler(cmd, source, ...)
+		end
 	end
 
 	function handler.open(source, gateconf)

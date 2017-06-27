@@ -43,7 +43,7 @@ function REQUEST.create_channel(args)
 	assert(request_co_map[id] == nil)
 
 	request_co_map[id] = coroutine.running()
-	skynet.call(dev_agent, "lua", "create_channel", id, ctype, param)
+	print(skynet.call(dev_agent, "lua", "create_channel", id, ctype, param))
 	skynet.wait()
 
 	local r = request_result[id]
@@ -147,7 +147,7 @@ function CMD.create_channel(source, rid, ctype, param)
 		['type'] = ctype,
 		data = cjson.encode(param)
 	}
-	send_request("create", data, function(args)
+	return send_request("create", data, function(args)
 		skynet.call(source, "lua", "on_create_channel", rid, args)
 	end)
 end
@@ -175,9 +175,6 @@ skynet.start(function()
 				send_request("heartbeat")
 			end
 			skynet.sleep(500)
-			if client_fd then
-				CMD.create_channel(skynet.self(), 0, 'serial', {baudrate=9600})
-			end
 		end
 	end)
 end)
