@@ -32,7 +32,7 @@ function REQUEST.create(args)
 	if not dev_agent then
 		return {
 			result = false,
-			msg = "Device "..device.." is not online"
+			msg = "Device "..args.device.." is not online"
 		}
 	end
 	local id = request_id

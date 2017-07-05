@@ -95,8 +95,9 @@ function server.register_handler(name)
 	skynet.call(loginservice, "lua", "register_gate", servername, skynet.self())
 end
 
+local CMD = {}
 CMD.find_user = function(user)
-	local u = username_map[user]
+	local u = users[user]
 	if u then
 		return u.agent
 	end
@@ -106,7 +107,7 @@ end
 -- called for skynet.call(gate, "lua", "xxx")
 function server.command_handler(cmd, source, ...)
 	local f = assert(CMD[cmd])
-	return f(source, ...)
+	return f(...)
 end
 
 msgserver.start(server)
