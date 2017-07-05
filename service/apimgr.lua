@@ -12,6 +12,11 @@ function command.auth(server, user, passwd)
     return api:login(user, passwd)
 end
 
+function command.list_devices(server, user)
+	local api = api_map[server]
+	return api:list_devices(user)
+end
+
 function command.add_api(server, module, ...)
 	local loaded, api = pcall(require, module)
 	if not loaded then

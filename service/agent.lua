@@ -5,7 +5,7 @@ local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
 
 local gate
-local userid, subid
+local userid, subid, servername
 local client_username
 local client_fd
 local session_id = 1
@@ -24,7 +24,10 @@ function REQUEST.handshake()
 end
 
 function REQUEST.list_devices(args)
-	return skynet.call("APIMGR", "lua", "list_devices", args.user)
+	if not servername then
+		servername = skynet.call(gate, "lua", "server_name")
+	end
+	return skynet.call("APIMGR", "lua", "list_devices", servername, args.user)
 end
 
 function REQUEST.create(args)

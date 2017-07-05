@@ -8,6 +8,7 @@ local server = {}
 local users = {}
 local username_map = {}
 local internal_id = 0
+local servername = nil
 
 -- login server disallow multi login, so login_handler never be reentry
 -- call by login server
@@ -103,6 +104,10 @@ CMD.find_user = function(user)
 		return u.agent
 	end
 	return nil, "No user agent for "..user
+end
+
+CMD.server_name = function()
+	return servername
 end
 
 -- called for skynet.call(gate, "lua", "xxx")
