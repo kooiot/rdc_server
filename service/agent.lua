@@ -27,11 +27,8 @@ function REQUEST.list_devices(args)
 	return skynet.call("APIMGR", "lua", "list_devices", args.user)
 end
 
-function REQUEST.create_channel(args)
-	local device = args.device
-	local ctype = args.type
-	local param = args.param
-	local dev_agent = skynet.call(gate, "lua", "find_device", device)
+function REQUEST.create(args)
+	local dev_agent = skynet.call(gate, "lua", "find_user", args.device)
 	if not dev_agent then
 		return {
 			result = false,
@@ -43,7 +40,7 @@ function REQUEST.create_channel(args)
 	assert(request_co_map[id] == nil)
 
 	request_co_map[id] = coroutine.running()
-	print(skynet.call(dev_agent, "lua", "create_channel", id, ctype, param))
+	skynet.call(dev_agent, "lua", "forward_request", id, "create", args)
 	skynet.wait()
 
 	local r = request_result[id]
@@ -142,24 +139,21 @@ function CMD.connect(source, username, fd)
 	client_fd = fd
 end
 
-function CMD.create_channel(source, rid, ctype, param)
-	data = {
-		['type'] = ctype,
-		data = cjson.encode(param)
-	}
-	return send_request("create", data, function(args)
-		skynet.call(source, "lua", "on_create_channel", rid, args)
+--- Called by other peer
+function CMD.forward_request(source, rid, request, params)
+	return send_request(request, params, function(args)
+		skynet.call(source, "lua", "forward_result", rid, args)
 	end)
 end
 
-function CMD.on_create_channel(source, rid, args)
-	print("Channel create", args.result, args.channel)
+--- Called when create request finished
+function CMD.forward_result(source, rid, args)
 	local co = request_co_map[rid]
 	if co then
 		request_result[rid] = args
 		skynet.wakeup(co)
 	else
-		print("No waiting coroutine for response")
+		log.warning("No waiting coroutine for response")
 	end
 end
 

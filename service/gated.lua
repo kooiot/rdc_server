@@ -95,7 +95,15 @@ function server.register_handler(name)
 	skynet.call(loginservice, "lua", "register_gate", servername, skynet.self())
 end
 
--- called for skynet.call(gate, "lua", "xxx)
+CMD.find_user = function(user)
+	local u = username_map[user]
+	if u then
+		return u.agent
+	end
+	return nil, "No user agent for "..user
+end
+
+-- called for skynet.call(gate, "lua", "xxx")
 function server.command_handler(cmd, source, ...)
 	local f = assert(CMD[cmd])
 	return f(source, ...)
