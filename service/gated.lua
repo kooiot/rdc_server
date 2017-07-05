@@ -85,7 +85,8 @@ end
 function server.request_handler(username, msg, sz)
 	local u = username_map[username]
 	agent = assert(u.agent, "There is no agent for "..username)
-	skynet.redirect(u.agent, u.subid, "client", 1, msg, sz)
+	--skynet.redirect(u.agent, u.subid, "client", 1, msg, sz)
+	return skynet.tostring(skynet.rawcall(u.agent, "client", msg, sz))
 end
 
 -- call by self (when gate open)

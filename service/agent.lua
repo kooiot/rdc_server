@@ -46,7 +46,7 @@ function REQUEST.create(args)
 	local r = request_result[id]
 	request_result[id] = nil
 	request_co_map[id] = nil
-	return table.unpack(r)
+	return r
 end
 
 local function request(name, args, response)
