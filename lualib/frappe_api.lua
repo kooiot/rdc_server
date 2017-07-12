@@ -101,7 +101,7 @@ function _M:login(user, passwd)
     if status == 200 then
         return body
     end
-    return nil, body
+    return nil, status, body
 end
 
 function _M:logout(user)

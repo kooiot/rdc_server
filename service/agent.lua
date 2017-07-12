@@ -30,6 +30,21 @@ function REQUEST.list_devices(args)
 	return skynet.call("APIMGR", "lua", "list_devices", servername, args.user)
 end
 
+local function forward_request(agent, cmd, args)
+	local id = request_id
+	request_id = request_id + 1
+	assert(request_co_map[id] == nil)
+
+	request_co_map[id] = coroutine.running()
+	skynet.call(agent, "lua", "forward_request", id, cmd, args)
+	skynet.wait()
+
+	local r = request_result[id]
+	request_result[id] = nil
+	request_co_map[id] = nil
+	return r
+end
+
 function REQUEST.create(args)
 	local dev_agent = skynet.call(gate, "lua", "find_user", args.device)
 	if not dev_agent then
@@ -38,18 +53,8 @@ function REQUEST.create(args)
 			msg = "Device "..args.device.." is not online"
 		}
 	end
-	local id = request_id
-	request_id = request_id + 1
-	assert(request_co_map[id] == nil)
 
-	request_co_map[id] = coroutine.running()
-	skynet.call(dev_agent, "lua", "forward_request", id, "create", args)
-	skynet.wait()
-
-	local r = request_result[id]
-	request_result[id] = nil
-	request_co_map[id] = nil
-	return r
+	return forward_request(dev_agent, "create", args)
 end
 
 local function request(name, args, response)
