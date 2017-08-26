@@ -14,7 +14,7 @@ local token = {
 	passwd = 'pa88word'
 }
 
-local fd = socket.connect("127.0.0.1", 8001)
+local fd = socket.connect("127.0.0.1", 6801)
 
 local function make_sock(fd)
 	local fd = fd
@@ -63,7 +63,7 @@ local text = "echo"
 local index = 1
 
 print("connect")
-local fd = assert(socket.connect("127.0.0.1", 8888))
+local fd = assert(socket.connect("127.0.0.1", 6888))
 local readpackage = login.unpacker(make_sock(fd), unpack_package)
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)
@@ -79,7 +79,7 @@ socket.close(fd)
 index = index + 1
 
 print("connect again")
-fd = assert(socket.connect("127.0.0.1", 8888))
+fd = assert(socket.connect("127.0.0.1", 6888))
 readpackage = login.unpacker(make_sock(fd), unpack_package)
 
 local gate_client = require 'client.gate':new(make_sock(fd))

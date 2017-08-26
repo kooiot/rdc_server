@@ -10,7 +10,7 @@ skynet.start(function()
 	if not is_windows and not skynet.getenv "daemon" then
 		local console = skynet.newservice("console")
 	end
-	skynet.newservice("debug_console",7000)
+	skynet.newservice("debug_console", 6000)
 	skynet.newservice("cfg")
 --	local starter = snax.uniqueservice("starter")
 
@@ -22,11 +22,11 @@ skynet.start(function()
 	local gate = skynet.newservice("gated", loginserver)
 
 	skynet.call(gate, "lua", "open" , {
-		port = 8888,
+		port = 6888,
 		maxclient = 64,
 		servername = "sample",
 	})
 
-	skynet.newservice("adminweb", "0.0.0.0", 8090)
+	skynet.newservice("adminweb", "0.0.0.0", 6080)
 	skynet.exit()
 end)

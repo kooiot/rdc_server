@@ -5,7 +5,7 @@ local coroutine = require "skynet.coroutine"
 
 local server = {
 	host = "0.0.0.0",
-	port = 8001,
+	port = 6801,
 	multilogin = false,	-- disallow multilogin
 	name = "login_master",
 }
